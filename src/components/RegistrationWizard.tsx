@@ -43,14 +43,17 @@ export default function RegistrationWizard() {
     enter: (direction: number) => ({
       x: direction > 0 ? "100%" : "-100%",
       opacity: 0,
+      position: 'absolute' as 'absolute',
     }),
     center: {
       x: 0,
       opacity: 1,
+      position: 'relative' as 'relative',
     },
     exit: (direction: number) => ({
       x: direction < 0 ? "100%" : "-100%",
       opacity: 0,
+      position: 'absolute' as 'absolute',
     }),
   };
 
@@ -71,8 +74,8 @@ export default function RegistrationWizard() {
         <Progress value={progressValue} className="w-full h-2" />
       </div>
 
-      <div className="w-full overflow-hidden relative" style={{ minHeight: '520px' }}>
-        <AnimatePresence initial={false} custom={direction}>
+      <div className="w-full overflow-hidden relative">
+        <AnimatePresence initial={false} custom={direction} mode="popLayout">
             <motion.div
               key={step}
               custom={direction}
@@ -84,7 +87,7 @@ export default function RegistrationWizard() {
                 x: { type: "spring", stiffness: 300, damping: 30 },
                 opacity: { duration: 0.2 },
               }}
-              className="absolute w-full"
+              className="w-full"
             >
               {step === 1 && <Step1 onNext={handleNext} />}
               {step === 2 && <Step2 onNext={handleNext} />}
@@ -374,5 +377,3 @@ function Step4({ onConfirm }: { onConfirm: () => void }) {
     </Card>
   );
 }
-
-    
