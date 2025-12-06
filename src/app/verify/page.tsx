@@ -50,9 +50,9 @@ export default function VerifyPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 flex flex-col items-center text-center">
+    <div className="container mx-auto px-4 py-8 flex flex-col items-center text-center max-w-md">
       <h1 className="text-2xl font-bold tracking-tight text-foreground">Your Secure Challenge Code</h1>
-      <p className="text-muted-foreground mt-2 max-w-sm">
+      <p className="text-muted-foreground mt-2">
         Tell the person you're talking to to open TrustBridge and enter this code. Do not share it anywhere else.
       </p>
 
@@ -62,7 +62,7 @@ export default function VerifyPage() {
         </p>
       </div>
 
-      <div className="flex items-center gap-4 w-full max-w-sm">
+      <div className="flex items-center gap-4 w-full">
         <Button onClick={copyToClipboard} variant="outline" className="flex-1">
           <Copy className="mr-2 h-4 w-4" /> Copy
         </Button>
@@ -71,10 +71,10 @@ export default function VerifyPage() {
         </Button>
       </div>
 
-      <div className="mt-12 flex flex-col items-center gap-4 p-6 border-dashed border-2 border-border rounded-lg bg-card w-full max-w-sm">
+      <div className="mt-12 flex flex-col items-center gap-4 p-6 border-dashed border-2 border-border rounded-lg bg-card w-full">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
         <h2 className="text-lg font-semibold">Waiting for signature...</h2>
-        <p className="text-muted-foreground text-sm max-w-xs">
+        <p className="text-muted-foreground text-sm">
           Once the other user enters the code and completes their liveness check, this screen will update automatically.
         </p>
         {/* --- Prototype Bypass --- */}

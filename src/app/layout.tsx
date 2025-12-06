@@ -25,7 +25,7 @@ export default function RootLayout({
         <AppProvider>
           <div className="flex flex-col min-h-screen bg-background">
             <Header />
-            <main className="flex-grow">
+            <main className="flex-grow p-4 sm:p-6 lg:p-8">
               {children}
             </main>
             <Toaster />

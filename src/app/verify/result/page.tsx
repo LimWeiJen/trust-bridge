@@ -2,7 +2,6 @@
 
 import { useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { useAppContext } from '@/contexts/AppContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,7 +20,6 @@ import { Loader2, Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { VerifyContextCheckOutput } from '@/ai/flows/verifier-context-check';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
   context: z.string().min(10, { message: 'Please provide more details about the context.' }),
@@ -64,15 +62,15 @@ export default function ResultPage() {
             <CardDescription>This information is from a trusted source.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-              <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
+          <div className="flex items-center gap-6">
+              <Avatar className="h-24 w-24">
                   <AvatarImage src={mockUserAli.imageUrl} alt={mockUserAli.legalName} />
                   <AvatarFallback>{mockUserAli.legalName.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div className="flex-1 text-center sm:text-left">
-                  <h2 className="text-xl sm:text-2xl font-bold">{mockUserAli.legalName}</h2>
+              <div className="flex-1">
+                  <h2 className="text-2xl font-bold">{mockUserAli.legalName}</h2>
                   <p className="text-muted-foreground">{mockUserAli.age} years old</p>
-                  <div className="mt-2 flex flex-wrap justify-center sm:justify-start gap-2 text-sm">
+                  <div className="mt-2 flex flex-wrap gap-2 text-sm">
                     <Badge variant="outline">{mockUserAli.relationship}</Badge>
                     <Badge variant="outline">{mockUserAli.occupation}</Badge>
                     <Badge variant="outline">{mockUserAli.currentLocation}</Badge>
@@ -84,19 +82,19 @@ export default function ResultPage() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-8 flex flex-col items-center text-center">
+    <div className="container mx-auto px-4 py-8 flex flex-col items-center text-center max-w-md">
       <Badge variant="secondary" className="mb-4 text-base py-1.5 px-3 border-emerald-500/50 bg-emerald-500/10 text-emerald-500">
         <ShieldCheck className="mr-2 h-5 w-5" />
         Identity Signature Confirmed
       </Badge>
       <h1 className="text-2xl font-bold tracking-tight text-foreground">Signature Verified</h1>
-      <p className="text-muted-foreground mt-2 max-w-md mb-8">
+      <p className="text-muted-foreground mt-2 mb-8">
         The user has proven control of their digital identity. Now, let's verify if what they're telling you is true.
       </p>
 
       <UserProfileCard />
 
-      <Card className="w-full max-w-md text-left">
+      <Card className="w-full text-left">
         <CardHeader>
           <CardTitle>AI Context Check</CardTitle>
           <CardDescription>
@@ -137,6 +135,12 @@ export default function ResultPage() {
 
 function ResultDisplay({ result, onReset, onNewChallenge }: { result: VerifyContextCheckOutput; onReset: () => void; onNewChallenge: () => void; }) {
   const isSuccess = result.success;
+  const router = useRouter();
+
+  const handleNewChallenge = () => {
+    onNewChallenge();
+    router.push('/');
+  }
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -153,7 +157,7 @@ function ResultDisplay({ result, onReset, onNewChallenge }: { result: VerifyCont
         <Button onClick={onReset} variant="outline" className="flex-1">
           Check Another Context
         </Button>
-         <Button onClick={onNewChallenge} variant="secondary" className="flex-1">
+         <Button onClick={handleNewChallenge} variant="secondary" className="flex-1">
           Start New Verification
         </Button>
       </div>

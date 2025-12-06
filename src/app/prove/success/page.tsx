@@ -15,13 +15,13 @@ export default function SuccessPage() {
     };
 
     return (
-        <div className="container mx-auto px-4 py-8 flex flex-col items-center text-center h-full justify-center">
+        <div className="container mx-auto px-4 py-8 flex flex-col items-center text-center h-full justify-center max-w-md">
             <CheckCircle className="h-20 w-20 text-emerald-500 mb-6" />
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Identity Cryptographically Signed</h1>
-            <p className="text-muted-foreground mt-4 max-w-sm">
+            <p className="text-muted-foreground mt-4">
                 Your identity has been successfully verified for this session. You may now close this app.
             </p>
-            <Button onClick={handleDone} className="mt-8 w-full max-w-xs" size="lg">
+            <Button onClick={handleDone} className="mt-8 w-full" size="lg">
                 Done
             </Button>
         </div>

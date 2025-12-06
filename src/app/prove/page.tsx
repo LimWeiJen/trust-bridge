@@ -40,13 +40,13 @@ export default function ProvePage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 flex flex-col items-center text-center">
+    <div className="container mx-auto px-4 py-8 flex flex-col items-center text-center max-w-sm">
       <h1 className="text-2xl font-bold tracking-tight text-foreground">Prove Your Identity</h1>
-      <p className="text-muted-foreground mt-2 max-w-sm">
+      <p className="text-muted-foreground mt-2">
         Enter the 6-digit code given to you by the person who is verifying your identity.
       </p>
 
-      <div className="my-8 h-16 w-full max-w-xs flex items-center justify-center bg-card border rounded-lg shadow-inner">
+      <div className="my-8 h-16 w-full flex items-center justify-center bg-card border rounded-lg shadow-inner">
         <p className="text-3xl sm:text-4xl font-mono tracking-[0.5em] text-center w-full px-2">
           {inputCode.padEnd(6, '·')}
         </p>
@@ -54,7 +54,7 @@ export default function ProvePage() {
 
       <Keypad value={inputCode} onChange={setInputCode} />
 
-      <Button onClick={handleSubmit} size="lg" className="mt-8 w-full max-w-xs" disabled={inputCode.length !== 6}>
+      <Button onClick={handleSubmit} size="lg" className="mt-8 w-full" disabled={inputCode.length !== 6}>
         Submit Code
       </Button>
     </div>
