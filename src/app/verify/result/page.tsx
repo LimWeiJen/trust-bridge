@@ -2,6 +2,7 @@
 
 import { useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAppContext } from '@/contexts/AppContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +20,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { VerifyContextCheckOutput } from '@/ai/flows/verifier-context-check';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
   context: z.string().min(10, { message: 'Please provide more details about the context.' }),
@@ -54,6 +57,32 @@ export default function ResultPage() {
     });
   };
 
+  const UserProfileCard = () => (
+    <Card className="w-full max-w-2xl mb-8">
+        <CardHeader>
+            <CardTitle>Verified Identity</CardTitle>
+            <CardDescription>This information is from a trusted source.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+              <Avatar className="h-24 w-24">
+                  <AvatarImage src={mockUserAli.imageUrl} alt={mockUserAli.legalName} />
+                  <AvatarFallback>{mockUserAli.legalName.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 text-center sm:text-left">
+                  <h2 className="text-2xl font-bold">{mockUserAli.legalName}</h2>
+                  <p className="text-muted-foreground">{mockUserAli.age} years old</p>
+                  <div className="mt-2 flex flex-wrap justify-center sm:justify-start gap-2">
+                    <Badge variant="outline">{mockUserAli.relationship}</Badge>
+                    <Badge variant="outline">{mockUserAli.occupation}</Badge>
+                    <Badge variant="outline">{mockUserAli.currentLocation}</Badge>
+                  </div>
+              </div>
+          </div>
+        </CardContent>
+    </Card>
+  );
+
   return (
     <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center">
       <Badge variant="secondary" className="mb-4 text-lg py-2 px-4 border-emerald-500/50 bg-emerald-500/10 text-emerald-500">
@@ -61,11 +90,13 @@ export default function ResultPage() {
         Identity Signature Confirmed
       </Badge>
       <h1 className="text-3xl font-bold tracking-tight text-foreground">Signature Verified</h1>
-      <p className="text-muted-foreground mt-2 max-w-lg">
+      <p className="text-muted-foreground mt-2 max-w-lg mb-8">
         The user has proven control of their digital identity. Now, let's verify if what they're telling you is true.
       </p>
 
-      <Card className="w-full max-w-2xl mt-12 text-left">
+      <UserProfileCard />
+
+      <Card className="w-full max-w-2xl text-left">
         <CardHeader>
           <CardTitle>AI Context Check</CardTitle>
           <CardDescription>
