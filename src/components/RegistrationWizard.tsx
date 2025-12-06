@@ -9,12 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, ScanLine, CheckCircle, User, Lock, HeartPulse, CircleDotDashed, Eye, ArrowLeft, VideoOff } from "lucide-react";
+import { Loader2, ScanLine, CheckCircle, User, Lock, HeartPulse, CircleDotDashed, Eye, ArrowLeft, VideoOff, CreditCard } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertTitle, AlertDescription } from "./ui/alert";
 
-const totalSteps = 4;
+const totalSteps = 5;
 
 export default function RegistrationWizard() {
   const [step, setStep] = useState(1);
@@ -74,7 +74,7 @@ export default function RegistrationWizard() {
         <Progress value={progressValue} className="w-full h-2" />
       </div>
 
-      <div className="w-full overflow-hidden relative">
+      <div className="w-full overflow-hidden relative min-h-[500px]">
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
             <motion.div
               key={step}
@@ -92,7 +92,8 @@ export default function RegistrationWizard() {
               {step === 1 && <Step1 onNext={handleNext} />}
               {step === 2 && <Step2 onNext={handleNext} />}
               {step === 3 && <Step3 onNext={handleNext} />}
-              {step === 4 && <Step4 onConfirm={handleConfirm} />}
+              {step === 4 && <Step4 onNext={handleNext} />}
+              {step === 5 && <Step5 onConfirm={handleConfirm} />}
             </motion.div>
         </AnimatePresence>
       </div>
@@ -119,9 +120,40 @@ function Step1({ onNext }: { onNext: () => void }) {
   );
 }
 
-
-// Step 2: ID Scan
+// Step 2: Enter MyKad
 function Step2({ onNext }: { onNext: () => void }) {
+  const [myKad, setMyKad] = useState("");
+
+  return (
+    <Card className="w-full">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl">Enter Your MyKad Number</CardTitle>
+        <CardDescription>
+            Please enter your Malaysian Identity Card number.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center">
+         <div className="w-full max-w-sm space-y-2">
+            <Label htmlFor="mykad">MyKad Number</Label>
+            <Input 
+                id="mykad"
+                value={myKad}
+                onChange={(e) => setMyKad(e.target.value)}
+                placeholder="e.g., 990101-14-5678"
+                autoComplete="off"
+            />
+         </div>
+        <Button onClick={onNext} disabled={myKad.length < 12} className="w-full max-w-sm mt-6" size="lg">
+            Continue
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+
+// Step 3: ID Scan
+function Step3({ onNext }: { onNext: () => void }) {
   const [isScanning, setIsScanning] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -206,8 +238,8 @@ function Step2({ onNext }: { onNext: () => void }) {
   );
 }
 
-// Step 3: Liveness Check
-function Step3({ onNext }: { onNext: () => void }) {
+// Step 4: Liveness Check
+function Step4({ onNext }: { onNext: () => void }) {
   const [status, setStatus] = useState<"idle" | "looking" | "blink" | "turn" | "success">("idle");
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -312,8 +344,8 @@ function Step3({ onNext }: { onNext: () => void }) {
 }
 
 
-// Step 4: Review and Confirm
-function Step4({ onConfirm }: { onConfirm: () => void }) {
+// Step 5: Review and Confirm
+function Step5({ onConfirm }: { onConfirm: () => void }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -377,3 +409,5 @@ function Step4({ onConfirm }: { onConfirm: () => void }) {
     </Card>
   );
 }
+
+    
