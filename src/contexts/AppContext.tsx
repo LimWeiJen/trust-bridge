@@ -6,6 +6,7 @@ import type { VerifyContextCheckOutput } from '@/ai/flows/verifier-context-check
 
 interface AppContextType {
   challengeCode: string | null;
+  setChallengeCode: (code: string | null) => void;
   generateChallengeCode: () => string;
   isSigned: boolean;
   signChallenge: () => void;
@@ -42,7 +43,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [router]);
 
   return (
-    <AppContext.Provider value={{ challengeCode, generateChallengeCode, isSigned, signChallenge, verificationResult, setVerificationResult, resetChallenge }}>
+    <AppContext.Provider value={{ challengeCode, setChallengeCode, generateChallengeCode, isSigned, signChallenge, verificationResult, setVerificationResult, resetChallenge }}>
       {children}
     </AppContext.Provider>
   );

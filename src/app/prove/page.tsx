@@ -10,8 +10,7 @@ import { Keypad } from '@/components/Keypad';
 export default function ProvePage() {
   const router = useRouter();
   const { toast } = useToast();
-  // The challengeCode from context is part of the original verification logic.
-  // const { challengeCode } = useAppContext(); 
+  const { setChallengeCode } = useAppContext(); 
   const [inputCode, setInputCode] = useState('');
 
   const handleSubmit = () => {
@@ -25,6 +24,7 @@ export default function ProvePage() {
 
     if (inputCode === challengeCode) {
       toast({ title: "Code Accepted", description: "Proceeding to identity verification." });
+      setChallengeCode(inputCode); // Make sure to set the code in context
       router.push('/prove/liveness');
     } else {
       toast({ title: "Invalid Code", description: "The code you entered is incorrect. Please try again.", variant: "destructive" });
@@ -34,6 +34,7 @@ export default function ProvePage() {
 
     // --- Prototype Bypass ---
     // For the prototype, we'll accept any 6-digit code and proceed.
+    setChallengeCode(inputCode); // Set the entered code in the context
     toast({ title: "Code Accepted", description: "Proceeding to identity verification." });
     router.push('/prove/liveness');
   };
