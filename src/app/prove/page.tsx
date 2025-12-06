@@ -40,14 +40,14 @@ export default function ProvePage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">Prove Your Identity</h1>
-      <p className="text-muted-foreground mt-2 max-w-md">
+    <div className="container mx-auto px-4 py-8 flex flex-col items-center text-center">
+      <h1 className="text-2xl font-bold tracking-tight text-foreground">Prove Your Identity</h1>
+      <p className="text-muted-foreground mt-2 max-w-sm">
         Enter the 6-digit code given to you by the person who is verifying your identity.
       </p>
 
       <div className="my-8 h-16 w-full max-w-xs flex items-center justify-center bg-card border rounded-lg shadow-inner">
-        <p className="text-4xl font-mono tracking-[0.5em] text-center w-full px-2">
+        <p className="text-3xl sm:text-4xl font-mono tracking-[0.5em] text-center w-full px-2">
           {inputCode.padEnd(6, '·')}
         </p>
       </div>

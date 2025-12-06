@@ -58,21 +58,21 @@ export default function ResultPage() {
   };
 
   const UserProfileCard = () => (
-    <Card className="w-full max-w-2xl mb-8">
+    <Card className="w-full max-w-md mb-8">
         <CardHeader>
             <CardTitle>Verified Identity</CardTitle>
             <CardDescription>This information is from a trusted source.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-              <Avatar className="h-24 w-24">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+              <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
                   <AvatarImage src={mockUserAli.imageUrl} alt={mockUserAli.legalName} />
                   <AvatarFallback>{mockUserAli.legalName.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1 text-center sm:text-left">
-                  <h2 className="text-2xl font-bold">{mockUserAli.legalName}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold">{mockUserAli.legalName}</h2>
                   <p className="text-muted-foreground">{mockUserAli.age} years old</p>
-                  <div className="mt-2 flex flex-wrap justify-center sm:justify-start gap-2">
+                  <div className="mt-2 flex flex-wrap justify-center sm:justify-start gap-2 text-sm">
                     <Badge variant="outline">{mockUserAli.relationship}</Badge>
                     <Badge variant="outline">{mockUserAli.occupation}</Badge>
                     <Badge variant="outline">{mockUserAli.currentLocation}</Badge>
@@ -84,23 +84,23 @@ export default function ResultPage() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center">
-      <Badge variant="secondary" className="mb-4 text-lg py-2 px-4 border-emerald-500/50 bg-emerald-500/10 text-emerald-500">
+    <div className="container mx-auto px-4 py-8 flex flex-col items-center text-center">
+      <Badge variant="secondary" className="mb-4 text-base py-1.5 px-3 border-emerald-500/50 bg-emerald-500/10 text-emerald-500">
         <ShieldCheck className="mr-2 h-5 w-5" />
         Identity Signature Confirmed
       </Badge>
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">Signature Verified</h1>
-      <p className="text-muted-foreground mt-2 max-w-lg mb-8">
+      <h1 className="text-2xl font-bold tracking-tight text-foreground">Signature Verified</h1>
+      <p className="text-muted-foreground mt-2 max-w-md mb-8">
         The user has proven control of their digital identity. Now, let's verify if what they're telling you is true.
       </p>
 
       <UserProfileCard />
 
-      <Card className="w-full max-w-2xl text-left">
+      <Card className="w-full max-w-md text-left">
         <CardHeader>
           <CardTitle>AI Context Check</CardTitle>
           <CardDescription>
-            Example: "He says he is my grandson Ali and needs money from Johor."
+            e.g., "He says he's my grandson Ali and needs money from Johor."
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -114,7 +114,7 @@ export default function ResultPage() {
                     <FormItem>
                       <FormLabel>What is the context of your conversation?</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter details of your conversation..." {...field} />
+                        <Input placeholder="Describe your conversation..." {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -142,18 +142,18 @@ function ResultDisplay({ result, onReset, onNewChallenge }: { result: VerifyCont
     <div className="flex flex-col items-center gap-4">
        <Alert variant={isSuccess ? 'default' : 'destructive'} className={isSuccess ? 'border-emerald-500/50 bg-emerald-500/10' : ''}>
          {isSuccess ? <ShieldCheck className="h-4 w-4 text-emerald-500" /> : <ShieldAlert className="h-4 w-4" />}
-        <AlertTitle className={isSuccess ? 'text-emerald-500' : 'text-destructive-foreground'}>
+        <AlertTitle className={isSuccess ? 'text-emerald-500' : ''}>
           {isSuccess ? 'Context Verified' : 'Context Mismatch'}
         </AlertTitle>
-        <AlertDescription className={isSuccess ? 'text-emerald-400' : 'text-destructive-foreground'}>
+        <AlertDescription className={isSuccess ? 'text-emerald-400' : ''}>
           {result.message}
         </AlertDescription>
       </Alert>
-      <div className='flex gap-4 mt-4'>
-        <Button onClick={onReset} variant="outline">
+      <div className='flex flex-col sm:flex-row gap-2 mt-4 w-full'>
+        <Button onClick={onReset} variant="outline" className="flex-1">
           Check Another Context
         </Button>
-         <Button onClick={onNewChallenge} variant="secondary">
+         <Button onClick={onNewChallenge} variant="secondary" className="flex-1">
           Start New Verification
         </Button>
       </div>

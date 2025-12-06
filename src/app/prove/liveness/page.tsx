@@ -83,32 +83,32 @@ export default function LivenessPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">Liveness Check</h1>
-      <p className="text-muted-foreground mt-2 max-w-md">
+    <div className="container mx-auto px-4 py-8 flex flex-col items-center text-center">
+      <h1 className="text-2xl font-bold tracking-tight text-foreground">Liveness Check</h1>
+      <p className="text-muted-foreground mt-2 max-w-sm">
         To cryptographically sign the challenge, we need to verify you're a real person.
       </p>
       
-      <div className="my-8 w-full max-w-md aspect-video bg-muted rounded-lg flex items-center justify-center overflow-hidden border">
+      <div className="my-8 w-full max-w-sm aspect-video bg-muted rounded-lg flex items-center justify-center overflow-hidden border">
         {status === 'idle' && (
              <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
         )}
         {status === 'scanning' && (
           <div className="flex flex-col items-center gap-4 text-accent">
-            <Loader2 className="h-16 w-16 animate-spin" />
-            <p className="font-semibold text-lg">Scanning...</p>
+            <Loader2 className="h-12 w-12 animate-spin" />
+            <p className="font-semibold">Scanning...</p>
           </div>
         )}
          {status === 'matched' && (
           <div className="flex flex-col items-center gap-4 text-emerald-500">
-            <CheckCircle className="h-16 w-16" />
-            <p className="font-semibold text-lg">Face Matched</p>
+            <CheckCircle className="h-12 w-12" />
+            <p className="font-semibold">Face Matched</p>
           </div>
         )}
       </div>
 
        {hasCameraPermission === false && (
-          <Alert variant="destructive" className="w-full max-w-md mb-4">
+          <Alert variant="destructive" className="w-full max-w-sm mb-4">
               <AlertTitle>Camera Access Required</AlertTitle>
               <AlertDescription>
                 Please allow camera access to use this feature. You may need to refresh the page after granting permission.
@@ -116,7 +116,7 @@ export default function LivenessPage() {
           </Alert>
         )}
 
-      <Button onClick={handleScan} size="lg" className="w-full max-w-md" disabled={status !== 'idle' || !hasCameraPermission}>
+      <Button onClick={handleScan} size="lg" className="w-full max-w-sm" disabled={status !== 'idle' || !hasCameraPermission}>
         {status === 'idle' ? 'Scan Face to Sign' : '...'}
       </Button>
     </div>

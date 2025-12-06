@@ -32,7 +32,7 @@ export const Keypad = ({ value, onChange }: KeypadProps) => {
           key={key}
           onClick={() => handleKeyPress(key)}
           variant="outline"
-          className="h-16 text-2xl font-bold"
+          className="h-14 sm:h-16 text-xl sm:text-2xl font-bold"
           aria-label={`Number ${key}`}
         >
           {key}
@@ -41,7 +41,7 @@ export const Keypad = ({ value, onChange }: KeypadProps) => {
       <Button
         onClick={handleClear}
         variant="ghost"
-        className="h-16 text-sm"
+        className="h-14 sm:h-16 text-sm"
         disabled={value.length === 0}
         aria-label="Clear all digits"
       >
@@ -50,7 +50,7 @@ export const Keypad = ({ value, onChange }: KeypadProps) => {
       <Button
         onClick={() => handleKeyPress('0')}
         variant="outline"
-        className="h-16 text-2xl font-bold"
+        className="h-14 sm:h-16 text-xl sm:text-2xl font-bold"
         aria-label="Number 0"
       >
         0
@@ -58,11 +58,11 @@ export const Keypad = ({ value, onChange }: KeypadProps) => {
       <Button
         onClick={handleDelete}
         variant="ghost"
-        className="h-16"
+        className="h-14 sm:h-16"
         disabled={value.length === 0}
         aria-label="Delete last digit"
       >
-        <X className="h-8 w-8" />
+        <X className="h-6 w-6 sm:h-8 sm:w-8" />
       </Button>
     </div>
   );
