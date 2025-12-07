@@ -13,14 +13,29 @@ import { Loader2, ScanLine, CheckCircle, User, Lock, HeartPulse, CircleDotDashed
 import { AnimatePresence, motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertTitle, AlertDescription } from "./ui/alert";
+import { MockUser, getUserByMyKad } from "@/lib/mock-data";
 
 const totalSteps = 5;
 
 export default function RegistrationWizard() {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
+  const [foundUser, setFoundUser] = useState<MockUser | null>(null);
+  
+  // Shared stream for seamless transition
+  const [sharedStream, setSharedStream] = useState<MediaStream | null>(null);
+
   const router = useRouter();
   const { login } = useAppContext();
+
+  // Clean up shared stream on unmount
+  useEffect(() => {
+    return () => {
+        if (sharedStream) {
+            sharedStream.getTracks().forEach(track => track.stop());
+        }
+    };
+  }, [sharedStream]);
 
   const handleNext = () => {
     setDirection(1);
@@ -32,9 +47,16 @@ export default function RegistrationWizard() {
     setStep((prev) => Math.max(prev - 1, 1));
   };
 
+  const handleUserFound = (user: MockUser) => {
+    setFoundUser(user);
+    handleNext();
+  };
+
   const handleConfirm = () => {
-    login();
-    router.push('/');
+    if (foundUser) {
+      login(foundUser);
+      router.push('/');
+    }
   };
 
   const progressValue = (step / totalSteps) * 100;
@@ -90,10 +112,11 @@ export default function RegistrationWizard() {
               className="w-full"
             >
               {step === 1 && <Step1 onNext={handleNext} />}
-              {step === 2 && <Step2 onNext={handleNext} />}
-              {step === 3 && <Step3 onNext={handleNext} />}
-              {step === 4 && <Step4 onNext={handleNext} />}
-              {step === 5 && <Step5 onConfirm={handleConfirm} />}
+              {step === 2 && <Step2 onNext={handleUserFound} />}
+              {step === 3 && <Step3 onNext={handleNext} onStreamReady={setSharedStream} user={foundUser} />}
+              {step === 4 && <Step4 onNext={handleNext} existingStream={sharedStream} />}
+              {step === 5 && <Step5 onConfirm={handleConfirm} user={foundUser} />}
+
             </motion.div>
         </AnimatePresence>
       </div>
@@ -121,8 +144,25 @@ function Step1({ onNext }: { onNext: () => void }) {
 }
 
 // Step 2: Enter MyKad
-function Step2({ onNext }: { onNext: () => void }) {
+function Step2({ onNext }: { onNext: (user: MockUser) => void }) {
   const [myKad, setMyKad] = useState("");
+  const [error, setError] = useState("");
+  const { toast } = useToast();
+
+  const handleContinue = () => {
+    const user = getUserByMyKad(myKad);
+    if (user) {
+        setError("");
+        onNext(user);
+    } else {
+        setError("MyKad not found in the mock database.");
+        toast({
+            variant: "destructive",
+            title: "Invalid MyKad",
+            description: "Please enter a valid MyKad number.",
+        });
+    }
+  };
 
   return (
     <Card className="w-full">
@@ -138,12 +178,17 @@ function Step2({ onNext }: { onNext: () => void }) {
             <Input 
                 id="mykad"
                 value={myKad}
-                onChange={(e) => setMyKad(e.target.value)}
+                onChange={(e) => {
+                    setMyKad(e.target.value);
+                    setError("");
+                }}
                 placeholder="e.g., 990101-14-5678"
                 autoComplete="off"
+                className={error ? "border-red-500" : ""}
             />
+            {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
          </div>
-        <Button onClick={onNext} disabled={myKad.length < 12} className="w-full max-w-sm mt-6" size="lg">
+        <Button onClick={handleContinue} disabled={myKad.length < 12} className="w-full max-w-sm mt-6" size="lg">
             Continue
         </Button>
       </CardContent>
@@ -152,43 +197,65 @@ function Step2({ onNext }: { onNext: () => void }) {
 }
 
 
-// Step 3: ID Scan
-function Step3({ onNext }: { onNext: () => void }) {
+// Step 3: ID Scan (Simulated Bypass)
+function Step3({ onNext, onStreamReady, user }: { onNext: () => void, onStreamReady: (stream: MediaStream) => void, user: MockUser | null }) {
   const [isScanning, setIsScanning] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  
   const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  
   const { toast } = useToast();
 
   useEffect(() => {
-    let stream: MediaStream;
+    let isMounted = true;
+
     const getCameraPermission = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment" } 
+        });
+        
+        if (!isMounted) {
+            stream.getTracks().forEach(track => track.stop());
+            return;
+        }
+
+        streamRef.current = stream;
+        onStreamReady(stream); 
         setHasCameraPermission(true);
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
       } catch (error) {
-        console.error('Error accessing camera:', error);
-        setHasCameraPermission(false);
-        toast({
+        // console.error('Error accessing camera:', error);
+        if (isMounted) {
+            setHasCameraPermission(false);
+        }
+      }
+    };
+    getCameraPermission();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [onStreamReady]);
+
+  const handleScan = () => {
+    if (hasCameraPermission === false) {
+         toast({
           variant: 'destructive',
           title: 'Camera Access Denied',
           description: 'Please enable camera permissions to proceed.',
         });
-      }
-    };
-    getCameraPermission();
-    return () => {
-      stream?.getTracks().forEach(track => track.stop());
-    };
-  }, [toast]);
-
-  const handleScan = () => {
-    if (!hasCameraPermission) return;
+        return;
+    }
+    
     setIsScanning(true);
+    
+    // Simple 2-second timer to simulate scanning
     setTimeout(() => {
-      onNext();
+        onNext();
     }, 2000);
   };
 
@@ -200,20 +267,21 @@ function Step3({ onNext }: { onNext: () => void }) {
       <CardContent className="flex flex-col items-center">
         <div className="relative w-full aspect-[1.586/1] max-w-sm bg-muted rounded-lg overflow-hidden border-2 border-dashed flex items-center justify-center mb-6">
           <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+          
           <div className="absolute inset-4 border-2 border-white/50 rounded-md flex flex-col items-center justify-center p-4 backdrop-blur-sm bg-black/10">
-              <User className="w-16 h-16 text-white/50 mb-2"/>
-              <p className="text-xs text-center text-white/80 font-medium">Align your MyKad within the frame</p>
+              {!isScanning && <User className="w-16 h-16 text-white/50 mb-2"/>}
+              <p className="text-xs text-center text-white/80 font-medium">
+                  {isScanning ? "Scanning ID Card..." : "Align your MyKad within the frame"}
+              </p>
           </div>
            {isScanning && (
-            <div className="absolute inset-0 bg-accent/30 flex flex-col items-center justify-center">
+            <div className="absolute inset-0 pointer-events-none">
               <motion.div
                 className="absolute top-0 w-full h-1 bg-accent/80 shadow-lg shadow-accent"
                 initial={{ y: 0 }}
                 animate={{ y: '100%' }}
                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
               />
-              <Loader2 className="w-8 h-8 text-accent-foreground animate-spin mb-2" />
-              <p className="text-accent-foreground font-semibold">Scanning & OCR Extraction...</p>
             </div>
           )}
            {hasCameraPermission === false && (
@@ -223,121 +291,49 @@ function Step3({ onNext }: { onNext: () => void }) {
             </div>
            )}
         </div>
+        
+        {/* Debug text output (optional, good for user trust) */}
+        {/* <p className="text-xs text-muted-foreground mb-2 h-4 w-full text-center truncate px-4">{scannedText}</p> */}
+
          {hasCameraPermission === false && (
             <Alert variant="destructive" className="mb-4 text-center">
               <AlertTitle>Camera Disabled</AlertTitle>
               <AlertDescription>Please grant camera access in your browser settings and refresh the page.</AlertDescription>
             </Alert>
         )}
-        <Button onClick={handleScan} disabled={isScanning || !hasCameraPermission} className="w-full max-w-sm" size="lg">
-          {isScanning ? <Loader2 className="animate-spin" /> : <ScanLine className="mr-2" />}
-          {isScanning ? "Scanning..." : "Tap to Scan MyKad"}
-        </Button>
+        
+        <div className="flex flex-col gap-2 w-full max-w-sm">
+            <Button onClick={handleScan} disabled={isScanning} className="w-full" size="lg">
+            {isScanning ? <Loader2 className="animate-spin" /> : <ScanLine className="mr-2" />}
+            {isScanning ? "Scanning..." : "Scan ID Card"}
+            </Button>
+        </div>
       </CardContent>
     </Card>
   );
 }
 
 // Step 4: Liveness Check
-function Step4({ onNext }: { onNext: () => void }) {
-  const [status, setStatus] = useState<"idle" | "looking" | "blink" | "turn" | "success">("idle");
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const { toast } = useToast();
+// Step 4: Liveness Check (Real AI Face Detection)
+import { FaceScanner } from "./FaceScanner";
 
-  const messages = {
-    looking: { icon: <CircleDotDashed className="animate-spin" />, text: "Looking for face..." },
-    blink: { icon: <Eye />, text: "Blink your eyes." },
-    turn: { icon: <ArrowLeft />, text: "Turn head slightly left." },
-    success: { icon: <CheckCircle className="text-emerald-500" />, text: "Success!" }
-  }
-
-  useEffect(() => {
-    let stream: MediaStream;
-    if (status !== 'idle') {
-      const getCameraPermission = async () => {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          setHasCameraPermission(true);
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-        } catch (error) {
-          console.error('Error accessing camera:', error);
-          setHasCameraPermission(false);
-          toast({ variant: 'destructive', title: 'Camera Access Denied' });
-        }
-      };
-      getCameraPermission();
-    }
-    return () => {
-      stream?.getTracks().forEach(track => track.stop());
-    };
-  }, [status, toast]);
-
-
-  const handleScan = () => {
-    setStatus("looking");
-    setTimeout(() => setStatus("blink"), 1500);
-    setTimeout(() => setStatus("turn"), 3000);
-    setTimeout(() => setStatus("success"), 4500);
-    setTimeout(onNext, 5500);
-  };
-
-  const currentStatus = messages[status as keyof typeof messages];
-
+function Step4({ onNext, existingStream }: { onNext: () => void, existingStream: MediaStream | null }) {
   return (
     <Card className="w-full">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Verify It's You</CardTitle>
         <CardDescription>
-          Please ensure you are in a well-lit area.
+          Please look at the camera to verify your identity.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center">
-        <div className="relative w-64 h-64 bg-muted rounded-full overflow-hidden border-2 border-dashed flex items-center justify-center mb-6">
-            {status === 'idle' ? (
-                <div className="flex flex-col items-center justify-center text-foreground/40">
-                    <User className="w-24 h-24"/>
-                </div>
-            ) : hasCameraPermission === false ? (
-                <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center text-destructive p-4">
-                    <VideoOff className="w-12 h-12 mb-2" />
-                    <p className="font-semibold text-center">Camera Access Required</p>
-                </div>
-            ) : (
-                <>
-                    <video ref={videoRef} className="absolute w-full h-full object-cover scale-x-[-1]" autoPlay muted playsInline />
-                    <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center text-white z-10 p-4">
-                        {currentStatus?.icon && (
-                            <motion.div 
-                            key={status}
-                            initial={{ opacity: 0, scale: 0.5 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="w-16 h-16"
-                            >
-                            {currentStatus.icon}
-                            </motion.div>
-                        )}
-                        {currentStatus?.text && (
-                        <motion.p 
-                            key={status + 'text'}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="font-semibold mt-4 text-center text-shadow"
-                            style={{textShadow: '0 1px 3px rgba(0,0,0,0.5)'}}
-                        >
-                            {currentStatus.text}
-                        </motion.p>
-                        )}
-                    </div>
-                </>
-            )}
-        </div>
-        <Button onClick={handleScan} disabled={status !== "idle"} className="w-full max-w-sm" size="lg">
-          {status === 'idle' ? <HeartPulse className="mr-2" /> : <Loader2 className="animate-spin" />}
-          {status === 'idle' ? "Start Face Scan" : "Checking..."}
-        </Button>
+        <FaceScanner 
+            onVerified={onNext}
+            existingStream={existingStream}
+            // Passing undefined/null to title/desc to let CardHeader handle it
+            title={undefined}
+            description={undefined}
+        />
       </CardContent>
     </Card>
   );
@@ -345,7 +341,7 @@ function Step4({ onNext }: { onNext: () => void }) {
 
 
 // Step 5: Review and Confirm
-function Step5({ onConfirm }: { onConfirm: () => void }) {
+function Step5({ onConfirm, user }: { onConfirm: () => void, user: MockUser | null }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -366,6 +362,16 @@ function Step5({ onConfirm }: { onConfirm: () => void }) {
         );
     }
 
+    if (!user) {
+        return (
+            <Card className="w-full">
+                <CardContent className="flex flex-col items-center justify-center p-10 gap-4">
+                    <p className="text-destructive font-semibold">Error: No user data found.</p>
+                </CardContent>
+            </Card>
+        )
+    }
+
   return (
     <Card className="w-full">
       <CardHeader className="text-center">
@@ -376,28 +382,28 @@ function Step5({ onConfirm }: { onConfirm: () => void }) {
       </CardHeader>
       <CardContent className="flex flex-col items-center">
         <Avatar className="w-24 h-24 mb-6 border-4 border-primary">
-          <AvatarImage src="https://picsum.photos/seed/1/200/200" alt="Ali bin Ahmad"/>
-          <AvatarFallback>AA</AvatarFallback>
+          <AvatarImage src={user.imageUrl} alt={user.legalName}/>
+          <AvatarFallback>{user.legalName.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="space-y-4 w-full max-w-sm">
             <div className="space-y-1">
                 <Label htmlFor="fullName">Full Name</Label>
                 <div className="relative">
-                    <Input id="fullName" value="Ali bin Ahmad" disabled className="bg-muted/50"/>
+                    <Input id="fullName" value={user.legalName} disabled className="bg-muted/50"/>
                     <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 </div>
             </div>
             <div className="space-y-1">
                 <Label htmlFor="icNumber">IC Number</Label>
                  <div className="relative">
-                    <Input id="icNumber" value="990101-14-5678" disabled className="bg-muted/50"/>
+                    <Input id="icNumber" value={user.myKad} disabled className="bg-muted/50"/>
                     <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 </div>
             </div>
             <div className="space-y-1">
-                <Label htmlFor="address">Official Address</Label>
+                <Label htmlFor="company">Company / Organization</Label>
                 <div className="relative">
-                    <Input id="address" value="No. 123, Jalan Merdeka, 50000 KL" disabled className="bg-muted/50"/>
+                    <Input id="company" value={user.company} disabled className="bg-muted/50"/>
                     <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 </div>
             </div>

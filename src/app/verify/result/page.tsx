@@ -1,59 +1,29 @@
 "use client";
 
-import { useEffect, useTransition } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/contexts/AppContext';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-
-import { performContextCheck } from './actions';
-import { mockUserAli } from '@/lib/mock-data';
-
-import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import type { VerifyContextCheckOutput } from '@/ai/flows/verifier-context-check';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
-const formSchema = z.object({
-  context: z.string().min(10, { message: 'Please provide more details about the context.' }),
-});
+import { ShieldCheck, Home, ShieldAlert, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function ResultPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { isSigned, verificationResult, setVerificationResult, resetChallenge } = useAppContext();
-  const [isPending, startTransition] = useTransition();
+  const { isSigned, verifiedUser, resetChallenge } = useAppContext();
 
   useEffect(() => {
+    // If not signed or no user data (page refresh might lose context in this prototype), redirect
     if (!isSigned) {
-      toast({ title: "Not Signed Yet", description: "Waiting for the other user to sign the challenge.", variant: "default" });
+      toast({ title: "Session Expired", description: "Please start the verification process again.", variant: "default" });
       router.push('/verify');
     }
-  }, [isSigned, router, toast]);
+  }, [isSigned, verifiedUser, router, toast]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { context: '' },
-  });
-
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    startTransition(async () => {
-      const result = await performContextCheck({
-        context: values.context,
-        relationship: mockUserAli.relationship,
-        currentLocation: mockUserAli.currentLocation,
-        occupation: mockUserAli.occupation,
-      });
-      setVerificationResult(result);
-    });
-  };
+  if (!verifiedUser) return null;
 
   const UserProfileCard = () => (
     <Card className="w-full max-w-md mb-8">
@@ -64,16 +34,47 @@ export default function ResultPage() {
         <CardContent>
           <div className="flex items-center gap-6">
               <Avatar className="h-24 w-24">
-                  <AvatarImage src={mockUserAli.imageUrl} alt={mockUserAli.legalName} />
-                  <AvatarFallback>{mockUserAli.legalName.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={verifiedUser.imageUrl} alt={verifiedUser.legalName} />
+                  <AvatarFallback>{verifiedUser.legalName.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                  <h2 className="text-2xl font-bold">{mockUserAli.legalName}</h2>
-                  <p className="text-muted-foreground">{mockUserAli.age} years old</p>
-                  <div className="mt-2 flex flex-wrap gap-2 text-sm">
-                    <Badge variant="outline">{mockUserAli.relationship}</Badge>
-                    <Badge variant="outline">{mockUserAli.occupation}</Badge>
-                    <Badge variant="outline">{mockUserAli.currentLocation}</Badge>
+                  <div className="flex items-center justify-between">
+                     <div>
+                        <h2 className="text-2xl font-bold">{verifiedUser.legalName}</h2>
+                        <p className="text-muted-foreground">{verifiedUser.age} years old</p>
+                     </div>
+                     <Badge variant={verifiedUser.safetyStatus === 'Safe' ? 'default' : verifiedUser.safetyStatus === 'Unsafe' ? 'destructive' : 'secondary'} className="text-base px-3 py-1">
+                        {verifiedUser.safetyStatus === 'Safe' && <ShieldCheck className="w-4 h-4 mr-2" />}
+                        {verifiedUser.safetyStatus === 'Unsafe' && <ShieldAlert className="w-4 h-4 mr-2" />}
+                        {verifiedUser.safetyStatus}
+                     </Badge>
+                  </div>
+                  
+                  <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                          <p className="font-semibold text-muted-foreground">Occupation</p>
+                          <p>{verifiedUser.occupation}</p>
+                      </div>
+                      <div>
+                          <p className="font-semibold text-muted-foreground">Company</p>
+                          <p>{verifiedUser.company}</p>
+                      </div>
+                  </div>
+
+                  <div className="mt-4">
+                      <p className="font-semibold text-muted-foreground mb-1">Criminal Record</p>
+                      {verifiedUser.crimesCommited.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                              {verifiedUser.crimesCommited.map((crime, i) => (
+                                  <Badge key={i} variant="destructive">{crime}</Badge>
+                              ))}
+                          </div>
+                      ) : (
+                          <div className="flex items-center text-emerald-600">
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              <span>No criminal record found.</span>
+                          </div>
+                      )}
                   </div>
               </div>
           </div>
@@ -89,78 +90,14 @@ export default function ResultPage() {
       </Badge>
       <h1 className="text-2xl font-bold tracking-tight text-foreground">Signature Verified</h1>
       <p className="text-muted-foreground mt-2 mb-8">
-        The user has proven control of their digital identity. Now, let's verify if what they're telling you is true.
+        The user has proven control of their digital identity.
       </p>
 
       <UserProfileCard />
 
-      <Card className="w-full text-left">
-        <CardHeader>
-          <CardTitle>AI Context Check</CardTitle>
-          <CardDescription>
-            e.g., "He says he's my grandson Ali and needs money from Johor."
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!verificationResult ? (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="context"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>What is the context of your conversation?</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Describe your conversation..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" disabled={isPending} className="w-full">
-                  {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shield className="mr-2 h-4 w-4" />}
-                  Verify Context
-                </Button>
-              </form>
-            </Form>
-          ) : (
-            <ResultDisplay result={verificationResult} onReset={() => setVerificationResult(null)} onNewChallenge={resetChallenge} />
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function ResultDisplay({ result, onReset, onNewChallenge }: { result: VerifyContextCheckOutput; onReset: () => void; onNewChallenge: () => void; }) {
-  const isSuccess = result.success;
-  const router = useRouter();
-
-  const handleNewChallenge = () => {
-    onNewChallenge();
-    router.push('/');
-  }
-
-  return (
-    <div className="flex flex-col items-center gap-4">
-       <Alert variant={isSuccess ? 'default' : 'destructive'} className={isSuccess ? 'border-emerald-500/50 bg-emerald-500/10' : ''}>
-         {isSuccess ? <ShieldCheck className="h-4 w-4 text-emerald-500" /> : <ShieldAlert className="h-4 w-4" />}
-        <AlertTitle className={isSuccess ? 'text-emerald-500' : ''}>
-          {isSuccess ? 'Context Verified' : 'Context Mismatch'}
-        </AlertTitle>
-        <AlertDescription className={isSuccess ? 'text-emerald-400' : ''}>
-          {result.message}
-        </AlertDescription>
-      </Alert>
-      <div className='flex flex-col sm:flex-row gap-2 mt-4 w-full'>
-        <Button onClick={onReset} variant="outline" className="flex-1">
-          Check Another Context
-        </Button>
-         <Button onClick={handleNewChallenge} variant="secondary" className="flex-1">
-          Start New Verification
-        </Button>
-      </div>
+      <Button onClick={resetChallenge} size="lg" className="w-full">
+         <Home className="mr-2 h-4 w-4" /> Return Home
+      </Button>
     </div>
   );
 }
