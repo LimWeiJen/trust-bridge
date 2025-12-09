@@ -4,6 +4,7 @@ import React, { createContext, useState, useContext, ReactNode, useCallback, use
 import { useRouter } from 'next/navigation';
 import { MockUser, MOCK_USERS } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 const LOGGED_IN_KEY = 'trustbridge_loggedin';
 const LOGGED_IN_USER_ID_KEY = 'trustbridge_user_id';
@@ -104,42 +105,80 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   // --- Polling Logic ---
   
-  // 1. Identity Owner: Poll for incoming requests
-  useEffect(() => {
-    let pollInterval: NodeJS.Timeout;
+  const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
 
-    if (isLoggedIn && myIdentityCode) {
-        pollInterval = setInterval(async () => {
-            try {
-                const res = await fetch(`/api/verify/poll?code=${myIdentityCode}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    // If we have a pending request, set it
-                    if (data.request) {
-                        setIncomingRequest(data.request);
-                        if (!incomingRequest || incomingRequest.id !== data.request.id) {
-                             toast({
-                                title: "New Verification Request",
-                                description: "Someone is trying to verify your identity.",
-                              });
-                        }
-                    } else {
-                        // If no pending request (e.g. cancelled or just idle), clear it if we have one? 
-                        // Actually, keep it until user acts or it's gone.
+  // --- Realtime Logic (Supabase Postgres Changes) ---
+  useEffect(() => {
+    // 1. Identity Owner: Listen for NEW requests targeting my code
+    const ownerChannel = supabase
+      .channel('realtime:owner')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'verification_requests',
+          filter: `code=eq.${myIdentityCode}`, // Listen for inserts with my code
+        },
+        (payload) => {
+          console.log("New Request Received (DB):", payload);
+          if (isLoggedIn && myIdentityCode) {
+             const newRow = payload.new as any; // Type assertion for DB row
+             setIncomingRequest({
+                 id: newRow.id,
+                 code: newRow.code,
+                 requesterName: newRow.requester_name || "Someone",
+                 status: newRow.status,
+                 timestamp: new Date(newRow.created_at).getTime(),
+                 ownerId: newRow.owner_id
+             });
+             toast({
+                title: "New Verification Request",
+                description: "Someone is trying to verify your identity.",
+              });
+          }
+        }
+      )
+      .subscribe();
+
+    // 2. Requester: Listen for UPDATES to my specific request ID
+    let requesterChannel: any;
+    if (currentRequestId) {
+        requesterChannel = supabase
+        .channel(`realtime:requester:${currentRequestId}`)
+        .on(
+            'postgres_changes',
+            {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'verification_requests',
+            filter: `id=eq.${currentRequestId}`, // Listen for updates to THIS request
+            },
+            (payload) => {
+                console.log("Request Updated (DB):", payload);
+                const updatedRow = payload.new as any;
+                
+                if (updatedRow.status === 'approved') {
+                    setRequestStatus('approved');
+                    if (updatedRow.owner_id) {
+                         // Fetch mock user details locally since DB only stores ID
+                         const user = MOCK_USERS.find(u => u.id === updatedRow.owner_id);
+                         setVerifiedUser(user || null);
                     }
+                } else if (updatedRow.status === 'rejected') {
+                    setRequestStatus('rejected');
                 }
-            } catch (error) {
-                console.error("Polling error", error);
+                // We keep listening until we navigate away or reset, but usually one update is enough
             }
-        }, 2000); // Poll every 2 seconds
+        )
+        .subscribe();
     }
 
-    return () => clearInterval(pollInterval);
-  }, [isLoggedIn, myIdentityCode, toast, incomingRequest]); // Added incomingRequest to dep array carefully or ref it
-
-  // 2. Requester: Poll for request status
-  // This logic is now handled by the effect below on currentRequestId
-  // Keeping this block empty or removing it to avoid confusion/errors.
+    return () => {
+      supabase.removeChannel(ownerChannel);
+      if (requesterChannel) supabase.removeChannel(requesterChannel);
+    };
+  }, [isLoggedIn, myIdentityCode, currentRequestId, toast]);
 
   // --- Auth Functions ---
   const login = useCallback((user: MockUser) => {
@@ -183,64 +222,69 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (!incomingRequest) return;
     
     // Call API to approve
+    // Update DB to Approved
     try {
-        await fetch('/api/verify', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                id: incomingRequest.id,
+        const { error } = await supabase
+            .from('verification_requests')
+            .update({ 
                 status: 'approved',
-                ownerId: currentUser?.id
+                owner_id: currentUser?.id
             })
-        });
+            .eq('id', incomingRequest.id);
+
+        if (error) throw error;
         setIncomingRequest(null); 
-    } catch (e) {
-        console.error("Failed to approve", e);
-        toast({ title: "Error", description: "Failed to process approval", variant: "destructive" });
+    } catch (error) {
+        console.error("Error approving request:", error);
+        toast({ title: "Error", description: "Failed to approve request", variant: "destructive" });
     }
   }, [incomingRequest, currentUser, toast]);
 
   const rejectRequest = useCallback(async () => {
     if (!incomingRequest) return;
+    // Update DB to Rejected
     try {
-        await fetch('/api/verify', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                id: incomingRequest.id,
-                status: 'rejected'
-            })
-        });
+        const { error } = await supabase
+            .from('verification_requests')
+            .update({ status: 'rejected' })
+            .eq('id', incomingRequest.id);
+
+        if (error) throw error;
         setIncomingRequest(null);
-    } catch (e) {
-        console.error("Failed to reject", e);
+    } catch (error) {
+        console.error("Error rejecting request:", error);
     }
   }, [incomingRequest]);
 
 
   // --- Requester Actions ---
-  // We need to track the current Request ID we are waiting for
-  const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
-
   const sendVerificationRequest = useCallback(async (code: string) => {
       setRequestStatus('pending');
       setPendingRequestCode(code); 
-      
+
+      // Insert into DB
       try {
-          const res = await fetch('/api/verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ code, requesterName: "Someone" })
-          });
-          const data = await res.json();
-          if (data.id) {
+          const { data, error } = await supabase
+            .from('verification_requests')
+            .insert({
+                code: code,
+                requester_name: "Someone",
+                status: 'pending'
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+          
+          if (data) {
               setCurrentRequestId(data.id);
           }
-      } catch (e) {
-          console.error("Failed to send request", e);
-          setRequestStatus('rejected'); // or error state
+      } catch (error) {
+          console.error("Error sending request:", error);
+          setRequestStatus('rejected');
+          toast({ title: "Error", description: "Failed to send verification request", variant: "destructive" });
       }
-  }, []);
+  }, [toast]);
 
   const resetRequestStatus = useCallback(() => {
       setRequestStatus('idle');
@@ -249,36 +293,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setVerifiedUser(null);
   }, []);
 
-  // Poll for status if we have a request ID
-  useEffect(() => {
-      let interval: NodeJS.Timeout;
-      if (currentRequestId && requestStatus === 'pending') {
-          interval = setInterval(async () => {
-              try {
-                  const res = await fetch(`/api/verify/poll?requestId=${currentRequestId}`);
-                  if (res.ok) {
-                      const data = await res.json();
-                      const req = data.request as VerificationRequest;
-                      if (req && req.status !== 'pending') {
-                          if (req.status === 'approved') {
-                              setRequestStatus('approved');
-                              if (req.ownerId) {
-                                  const user = MOCK_USERS.find(u => u.id === req.ownerId);
-                                  setVerifiedUser(user || null);
-                              }
-                          } else if (req.status === 'rejected') {
-                              setRequestStatus('rejected');
-                          }
-                          setCurrentRequestId(null); // Stop polling
-                      }
-                  }
-              } catch (e) {
-                  console.error("Poll status error", e);
-              }
-          }, 2000);
-      }
-      return () => clearInterval(interval);
-  }, [currentRequestId, requestStatus]);
+
 
 
   // Clean up old window listener since we don't use it
