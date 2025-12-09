@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.trust_bridge_beta.twa",
+        "sha256_cert_fingerprints": ["28:80:13:A7:1B:6D:33:6D:BD:B6:34:29:C1:BE:9C:EB:AE:C0:57:92:82:1D:02:3E:6A:60:DC:2E:62:9C:FF:DA"]
+      }
+    }]
