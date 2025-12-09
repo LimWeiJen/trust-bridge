@@ -61,13 +61,13 @@ export default function Home() {
             ? "Someone wants to verify your identity." 
             : isLoggedIn
               ? "Share your code with the person verifying you."
-              : 'First, create your secure digital ID.'}
+              : 'First, access using your secure digital ID.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {!isLoggedIn ? (
           <Button className="w-full" size="lg" onClick={handleProveClick}>
-            Create Digital ID <UserPlus className="ml-2" />
+            Access Using Digital ID <UserPlus className="ml-2" />
           </Button>
         ) : incomingRequest ? (
            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2">
@@ -145,11 +145,12 @@ export default function Home() {
 
   const LoggedOutView = () => (
       <div className="flex flex-col items-center text-center px-4 max-w-2xl mx-auto mb-12">
+        <ShieldCheck className="h-16 w-16 text-primary mb-6" />
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground mb-4">
-          Stop Scams. Verify Identity.
+          Verify Your Identity Instantly.
         </h1>
         <p className="text-base sm:text-lg text-muted-foreground">
-          TrustBridge helps you confirm you're talking to who you think you are, without sharing private data.
+          TrustBridge helps you confirm you're talking to who you think you are. Building digital trust is easier than ever.
         </p>
       </div>
   );

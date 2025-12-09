@@ -8,6 +8,11 @@ import FaceVerificationGuard from '@/components/FaceVerificationGuard';
 export const metadata: Metadata = {
   title: 'TrustBridge',
   description: 'Zero-Knowledge Identity Verification to Prevent Scams',
+  manifest: '/manifest.json',
+};
+
+export const viewport = {
+  themeColor: "#000000",
 };
 
 export default function RootLayout({
@@ -16,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
