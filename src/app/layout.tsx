@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   title: 'My Secure',
   description: 'Zero-Knowledge Identity Verification to Prevent Scams',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/images/favicon.jpg',
+    apple: '/images/favicon.jpg',
+  },
 };
 
 export const viewport = {

@@ -1,5 +1,7 @@
 "use client";
 
+import Image from 'next/image';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppContext } from '@/contexts/AppContext';
@@ -161,7 +163,13 @@ export default function Home() {
 
   const LoggedOutView = () => (
       <div className="flex flex-col items-center text-center px-4 max-w-2xl mx-auto mb-12">
-        <ShieldCheck className="h-16 w-16 text-primary mb-6" />
+        <Image 
+          src="/images/favicon.jpg" 
+          alt="My Secure Logo" 
+          width={128} 
+          height={128} 
+          className="mb-6 rounded-md"
+        />
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground mb-4">
           Verify Your Identity Instantly.
         </h1>
