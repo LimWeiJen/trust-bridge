@@ -1,12 +1,12 @@
-# TrustBridge: Verify Your Identity Instantly
+# My Security: Verify Your Identity Instantly
 
-**TrustBridge** is a digital trust platform designed to eliminate scams and build confidence in digital interactions. It allows users to verify each other's identity in real-time using government-issued IDs (MyKad) and AI-powered facial recognition.
+**My Security** is a digital trust platform designed to eliminate scams and build confidence in digital interactions. It allows users to verify each other's identity in real-time using government-issued IDs (MyKad) and AI-powered facial recognition.
 
 ## The Problem
 In an era of deepfakes and sophisticated online scams, it's becoming impossible to know if the person you're talking to is who they claim to be. Whether it's a marketplace transaction, a dating profile, or a freelance contract, blind trust can lead to financial loss and safety risks.
 
 ## The Solution
-TrustBridge creates a secure, verified bridge between two parties.
+My Security creates a secure, verified bridge between two parties.
 1.  **Verified Digital ID**: Users create an immutable digital identity by scanning their physical MyKad and performing a liveness check.
 2.  **Consent-Based Sharing**: Your data is yours. You only share your verified profile when you explicitly approve a request.
 3.  **Real-Time Verification**: A "Verifier" enters a unique code provided by a "Prover" to instantly view their official name, photo, and safety status.
@@ -37,7 +37,7 @@ Users scan their MyKad (simulated) and their face. The system validates the ID f
 Once verified, the user (Prover) gets a dynamic 6-digit code (e.g., `123-456`).
 
 ### 3. Verifier Checks Identity
-The other party (Verifier) enters this code into TrustBridge.
+The other party (Verifier) enters this code into My Security.
 
 ### 4. Approval & Result
 The Prover receives a notification: *"Someone wants to verify your identity."*

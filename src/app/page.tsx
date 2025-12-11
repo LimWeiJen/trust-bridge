@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppContext } from '@/contexts/AppContext';
-import { ArrowRight, User, UserPlus, ShieldCheck, ShieldAlert, RefreshCw, Check, X } from 'lucide-react';
+import { ArrowRight, User, UserPlus, ShieldCheck, ShieldAlert, RefreshCw, Check, X, Copy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -96,15 +96,31 @@ export default function Home() {
              <p className="text-xs text-muted-foreground mb-1">
                 Auto-refreshes every 3 minutes
              </p>
-             <Button 
-                variant="ghost" 
-                size="icon" 
-                className="absolute top-0 right-0 h-8 w-8 text-muted-foreground hover:text-primary" 
-                onClick={regenerateIdentityCode} 
-                title="Regenerate Code"
-             >
-                <RefreshCw className="h-4 w-4" />
-             </Button>
+             <div className="absolute top-0 right-0 flex gap-2">
+                 <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-muted-foreground hover:text-primary" 
+                    onClick={() => {
+                        if (myIdentityCode) {
+                            navigator.clipboard.writeText(myIdentityCode);
+                            toast({ title: "Code Copied", description: "Identity code copied to clipboard." });
+                        }
+                    }} 
+                    title="Copy Code"
+                 >
+                    <Copy className="h-4 w-4" />
+                 </Button>
+                 <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-muted-foreground hover:text-primary" 
+                    onClick={regenerateIdentityCode} 
+                    title="Regenerate Code"
+                 >
+                    <RefreshCw className="h-4 w-4" />
+                 </Button>
+             </div>
           </div>
         )}
       </CardContent>
@@ -150,7 +166,7 @@ export default function Home() {
           Verify Your Identity Instantly.
         </h1>
         <p className="text-base sm:text-lg text-muted-foreground">
-          TrustBridge helps you confirm you're talking to who you think you are. Building digital trust is easier than ever.
+          My Security helps you confirm you're talking to who you think you are. Building digital trust is easier than ever.
         </p>
       </div>
   );

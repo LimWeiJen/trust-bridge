@@ -1,7 +1,7 @@
 {
-  "name": "TrustBridge",
-  "short_name": "TrustBridge",
-  "description": "Verify Your Identity Instantly with TrustBridge.",
+  "name": "My Security",
+  "short_name": "My Security",
+  "description": "Verify Your Identity Instantly with My Security.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

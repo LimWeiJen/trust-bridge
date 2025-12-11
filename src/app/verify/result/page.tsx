@@ -32,12 +32,12 @@ export default function ResultPage() {
             <CardDescription>This information is from a trusted source.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-6">
               <Avatar className="h-24 w-24">
                   <AvatarImage src={verifiedUser.imageUrl} alt={verifiedUser.legalName} />
                   <AvatarFallback>{verifiedUser.legalName.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div className="flex-1">
+              <div className="flex-1 w-full sm:w-auto">
                   <div className="flex items-center justify-between">
                      <div>
                         <h2 className="text-2xl font-bold">{verifiedUser.legalName}</h2>

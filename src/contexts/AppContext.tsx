@@ -6,9 +6,9 @@ import { MockUser, MOCK_USERS } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 
-const LOGGED_IN_KEY = 'trustbridge_loggedin';
-const LOGGED_IN_USER_ID_KEY = 'trustbridge_user_id';
-const VERIFICATION_REQUEST_KEY = 'trustbridge_verification_request';
+const LOGGED_IN_KEY = 'mysecurity_loggedin';
+const LOGGED_IN_USER_ID_KEY = 'mysecurity_user_id';
+const VERIFICATION_REQUEST_KEY = 'mysecurity_verification_request';
 
 export interface VerificationRequest {
   id: string;
